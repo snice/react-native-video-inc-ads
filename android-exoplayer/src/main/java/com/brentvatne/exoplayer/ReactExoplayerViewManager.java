@@ -65,6 +65,7 @@ public class ReactExoplayerViewManager extends ViewGroupManager<ReactExoplayerVi
     private static final String PROP_PLAY_IN_BACKGROUND = "playInBackground";
     private static final String PROP_DISABLE_FOCUS = "disableFocus";
     private static final String PROP_FULLSCREEN = "fullscreen";
+    private static final String PROP_FULLSCREEN_ORIENTATION = "fullscreenOrientation";
     private static final String PROP_USE_TEXTURE_VIEW = "useTextureView";
     private static final String PROP_SELECTED_VIDEO_TRACK = "selectedVideoTrack";
     private static final String PROP_SELECTED_VIDEO_TRACK_TYPE = "type";
@@ -145,6 +146,7 @@ public class ReactExoplayerViewManager extends ViewGroupManager<ReactExoplayerVi
         Map<String, String> headers = src.hasKey(PROP_SRC_HEADERS) ? toStringMap(src.getMap(PROP_SRC_HEADERS)) : null;
 
         if (TextUtils.isEmpty(uriString)) {
+            videoView.clearSrc();
             return;
         }
 
@@ -314,6 +316,11 @@ public class ReactExoplayerViewManager extends ViewGroupManager<ReactExoplayerVi
     @ReactProp(name = PROP_FULLSCREEN, defaultBoolean = false)
     public void setFullscreen(final ReactExoplayerView videoView, final boolean fullscreen) {
         videoView.setFullscreen(fullscreen);
+    }
+
+    @ReactProp(name = PROP_FULLSCREEN_ORIENTATION)
+    public void setFullscreenOrientation(final ReactExoplayerView videoView, final String fullscreenOrientation) {
+        videoView.setFullscreenOrientation(fullscreenOrientation);
     }
 
     @ReactProp(name = PROP_USE_TEXTURE_VIEW, defaultBoolean = true)

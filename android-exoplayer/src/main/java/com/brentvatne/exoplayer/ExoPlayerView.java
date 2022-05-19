@@ -17,6 +17,7 @@ import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.video.VideoListener;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.ads.AdsLoader;
 import com.google.android.exoplayer2.source.TrackGroupArray;
@@ -93,6 +94,14 @@ public final class ExoPlayerView extends FrameLayout implements AdsLoader.AdView
 
     }
 
+    private void clearVideoView() {
+        if (surfaceView instanceof TextureView) {
+            player.clearVideoTextureView((TextureView) surfaceView);
+        } else if (surfaceView instanceof SurfaceView) {
+            player.clearVideoSurfaceView((SurfaceView) surfaceView);
+        }
+    }
+
     private void setVideoView() {
         if (surfaceView instanceof TextureView) {
             player.setVideoTextureView((TextureView) surfaceView);
@@ -143,29 +152,26 @@ public final class ExoPlayerView extends FrameLayout implements AdsLoader.AdView
     }
 
     /**
-     * Set the {@link SimpleExoPlayer} to use. The {@link SimpleExoPlayer#setTextOutput} and
-     * {@link SimpleExoPlayer#setVideoListener} method of the player will be called and previous
+     * Set the {@link SimpleExoPlayer} to use. The {@link SimpleExoPlayer#addTextOutput} and
+     * {@link SimpleExoPlayer#addVideoListener} method of the player will be called and previous
      * assignments are overridden.
      *
      * @param player The {@link SimpleExoPlayer} to use.
      */
     public void setPlayer(SimpleExoPlayer player) {
-        if (this.player == player) {
-            return;
-        }
         if (this.player != null) {
-            this.player.setTextOutput(null);
-            this.player.setVideoListener(null);
+            this.player.removeTextOutput(componentListener);
+            this.player.removeVideoListener(componentListener);
             this.player.removeListener(componentListener);
-            this.player.setVideoSurface(null);
+            clearVideoView();
         }
         this.player = player;
-        shutterView.setVisibility(VISIBLE);
+        shutterView.setVisibility(this.hideShutterView ? View.INVISIBLE : View.VISIBLE);
         if (player != null) {
             setVideoView();
-            player.setVideoListener(componentListener);
+            player.addVideoListener(componentListener);
             player.addListener(componentListener);
-            player.setTextOutput(componentListener);
+            player.addTextOutput(componentListener);
         }
     }
 
@@ -227,7 +233,7 @@ public final class ExoPlayerView extends FrameLayout implements AdsLoader.AdView
             }
         }
         // Video disabled so the shutter must be closed.
-        shutterView.setVisibility(VISIBLE);
+        shutterView.setVisibility(this.hideShutterView ? View.INVISIBLE : View.VISIBLE);
     }
 
     public void invalidateAspectRatio() {
@@ -235,7 +241,7 @@ public final class ExoPlayerView extends FrameLayout implements AdsLoader.AdView
         layout.invalidateAspectRatio();
     }
 
-    private final class ComponentListener implements SimpleExoPlayer.VideoListener,
+    private final class ComponentListener implements VideoListener,
             TextOutput, ExoPlayer.EventListener {
 
         // TextRenderer.Output implementation
