@@ -69,7 +69,6 @@ import com.google.android.exoplayer2.upstream.DefaultAllocator;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
-
 import com.google.android.exoplayer2.ext.ima.ImaAdsLoader;
 import com.google.android.exoplayer2.source.ads.AdsMediaSource;
 
@@ -91,7 +90,7 @@ class ReactExoplayerView extends FrameLayout implements
         BecomingNoisyListener,
         AudioManager.OnAudioFocusChangeListener,
         MetadataOutput,
-        DefaultDrmSessionEventListener, AdEvent.AdEventListener {
+        DrmSessionEventListener, AdEvent.AdEventListener {
 
     private static final String TAG = "ReactExoplayerView";
 
@@ -469,12 +468,13 @@ class ReactExoplayerView extends FrameLayout implements
                     DefaultLoadControl defaultLoadControl = defaultLoadControlBuilder.createDefaultLoadControl();
                     DefaultRenderersFactory renderersFactory =
                             new DefaultRenderersFactory(getContext())
-                                    .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF);
+                                    .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
+                    renderersFactory.experimentalSetAsynchronousBufferQueueingEnabled(true);
                     player = new SimpleExoPlayer.Builder(getContext(), renderersFactory)
-                                .setTrackSelector(trackSelector)
-                                .setBandwidthMeter(bandwidthMeter)
-                                .setLoadControl(defaultLoadControl)
-                                .build();
+                            .setTrackSelector(trackSelector)
+                            .setBandwidthMeter(bandwidthMeter)
+                            .setLoadControl(defaultLoadControl)
+                            .build();
                     player.addListener(self);
                     player.addMetadataOutput(self);
                     exoPlayerView.setPlayer(player);
@@ -504,31 +504,14 @@ class ReactExoplayerView extends FrameLayout implements
                         }
                     }
                     // End DRM
-                    player = ExoPlayerFactory.newSimpleInstance(getContext(), renderersFactory,
-                            trackSelector, defaultLoadControl, drmSessionManager, bandwidthMeter);
-                    player.addListener(self);
-                    player.addMetadataOutput(self); //a random comment here
-                    adsLoader.setPlayer(player);
-                    exoPlayerView.setPlayer(player);
-                    audioBecomingNoisyReceiver.setListener(self);
-                    bandwidthMeter.addEventListener(new Handler(), self);
-                    setPlayWhenReady(!isPaused);
-                    playerNeedsSource = true;
-
-                    PlaybackParameters params = new PlaybackParameters(rate, 1f);
-                    player.setPlaybackParameters(params);
-                }
-                if (playerNeedsSource && srcUri != null) {
-                    exoPlayerView.invalidateAspectRatio();
 
                     ArrayList<MediaSource> mediaSourceList = buildTextSources();
-                    MediaSource videoSource = buildMediaSource(srcUri, extension);
-                    MediaSource mediaSourceWithAds = new AdsMediaSource(videoSource, mediaDataSourceFactory, adsLoader, exoPlayerView);
+                    MediaSource videoSource = buildMediaSource(srcUri, extension, drmSessionManager);
                     MediaSource mediaSource;
                     if (mediaSourceList.size() == 0) {
-                        mediaSource = mediaSourceWithAds;
+                        mediaSource = videoSource;
                     } else {
-                        mediaSourceList.add(0, mediaSourceWithAds);
+                        mediaSourceList.add(0, videoSource);
                         MediaSource[] textSourceArray = mediaSourceList.toArray(
                                 new MediaSource[mediaSourceList.size()]
                         );
@@ -1466,15 +1449,12 @@ class ReactExoplayerView extends FrameLayout implements
         }
     }
 
-<<<<<<< HEAD
     @Override
     public void onAdEvent(AdEvent adEvent) {
         eventEmitter.receiveAdEvent(adEvent.getType().name());
     }
 
-=======
     public interface FullScreenDelegate {
         void closeFullScreen();
     }
->>>>>>> d681e5505f7c4827fc1f2fb9833aa3edb8f005f6
 }
