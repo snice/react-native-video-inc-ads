@@ -477,7 +477,8 @@ class ReactExoplayerView extends FrameLayout implements
                     DefaultLoadControl defaultLoadControl = defaultLoadControlBuilder.createDefaultLoadControl();
                     DefaultRenderersFactory renderersFactory =
                             new DefaultRenderersFactory(getContext())
-                                    .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF);
+                                    .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
+                    renderersFactory.experimentalSetAsynchronousBufferQueueingEnabled(true);
 
                     player = new SimpleExoPlayer.Builder(getContext(), renderersFactory)
                             .setTrackSelector(trackSelector)
