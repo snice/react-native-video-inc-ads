@@ -19,7 +19,7 @@ public class BlackListMediaCodecSelector implements MediaCodecSelector {
         // remove failing "OMX.amlogic.avc.decoder.awesome.secure"
         List<MediaCodecInfo> filteredCodecInfos = new ArrayList<>();
         for (MediaCodecInfo codecInfo: codecInfos) {
-            if (!"OMX.amlogic.avc.decoder.awesome.secure".equals(codecInfo.name)) {
+            if (!"OMX.MTK.VIDEO.DECODER.AVC.secure".equals(codecInfo.name)) {
                 filteredCodecInfos.add(codecInfo);
             }
         }
