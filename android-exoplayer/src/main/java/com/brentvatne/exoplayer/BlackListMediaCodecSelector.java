@@ -16,7 +16,7 @@ public class BlackListMediaCodecSelector implements MediaCodecSelector {
         List<MediaCodecInfo> codecInfos = MediaCodecUtil.getDecoderInfos(
                 mimeType, requiresSecureDecoder, requiresTunnelingDecoder);
 
-        // remove failing "OMX.amlogic.avc.decoder.awesome.secure"
+        // remove failing "OMX.MTK.VIDEO.DECODER.AVC.secure"
         List<MediaCodecInfo> filteredCodecInfos = new ArrayList<>();
         for (MediaCodecInfo codecInfo: codecInfos) {
             if (!"OMX.MTK.VIDEO.DECODER.AVC.secure".equals(codecInfo.name)) {
@@ -26,9 +26,4 @@ public class BlackListMediaCodecSelector implements MediaCodecSelector {
         return filteredCodecInfos;
     }
 
-    @Nullable
-    @Override
-    public MediaCodecInfo getPassthroughDecoderInfo() throws MediaCodecUtil.DecoderQueryException {
-        return MediaCodecUtil.getPassthroughDecoderInfo();
-    }
 }

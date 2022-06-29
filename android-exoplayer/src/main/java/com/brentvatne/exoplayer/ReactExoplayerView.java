@@ -5,7 +5,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
+import android.media.MediaCodecList;
+import android.media.MediaCrypto;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -35,11 +38,15 @@ import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.Renderer;
+import com.google.android.exoplayer2.RendererCapabilities;
+import com.google.android.exoplayer2.RenderersFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.drm.DefaultDrmSessionManager;
@@ -52,7 +59,10 @@ import com.google.android.exoplayer2.drm.FrameworkMediaCrypto;
 import com.google.android.exoplayer2.drm.FrameworkMediaDrm;
 import com.google.android.exoplayer2.drm.HttpMediaDrmCallback;
 import com.google.android.exoplayer2.drm.UnsupportedDrmException;
+import com.google.android.exoplayer2.mediacodec.MediaCodecAdapter;
+import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
 import com.google.android.exoplayer2.mediacodec.MediaCodecRenderer;
+import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil;
 import com.google.android.exoplayer2.metadata.Metadata;
 import com.google.android.exoplayer2.metadata.MetadataOutput;
@@ -83,17 +93,21 @@ import com.google.android.exoplayer2.upstream.DefaultAllocator;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.upstream.LoadErrorHandlingPolicy;
+import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.android.exoplayer2.util.Util;
 
 import com.google.android.exoplayer2.ext.ima.ImaAdsLoader;
 import com.google.android.exoplayer2.source.ads.AdsMediaSource;
+import com.google.android.exoplayer2.video.MediaCodecVideoRenderer;
 
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.Map;
@@ -478,13 +492,23 @@ class ReactExoplayerView extends FrameLayout implements
                     DefaultRenderersFactory renderersFactory =
                             new DefaultRenderersFactory(getContext())
                                     .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
-                    renderersFactory.experimentalSetAsynchronousBufferQueueingEnabled(true);
 
+                    renderersFactory.setMediaCodecSelector(new BlackListMediaCodecSelector());
+
+                    if(Build.BRAND.equals("HUAWEI") || Build.BRAND.equals("Redmi") || Build.BRAND.equals("Xiaomi")){
+                        renderersFactory.experimentalSetAsynchronousBufferQueueingEnabled(true);
+                    }
+
+                    player = ExoPlayerFactory.newSimpleInstance(getContext(),renderersFactory,trackSelector,defaultLoadControl, bandwidthMeter);
+
+                    /*
                     player = new SimpleExoPlayer.Builder(getContext(), renderersFactory)
                             .setTrackSelector(trackSelector)
                             .setBandwidthMeter(bandwidthMeter)
                             .setLoadControl(defaultLoadControl)
                             .build();
+
+                     */
                     player.addListener(self);
                     player.addMetadataOutput(self); //a random comment here
                     adsLoader.setPlayer(player);
@@ -547,6 +571,7 @@ class ReactExoplayerView extends FrameLayout implements
             }
         }, 1);
     }
+
 
     private DrmSessionManager buildDrmSessionManager(UUID uuid,
                                                      String licenseUrl, String[] keyRequestPropertiesArray) throws UnsupportedDrmException {
